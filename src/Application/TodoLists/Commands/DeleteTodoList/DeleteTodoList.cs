@@ -7,16 +7,18 @@ public record DeleteTodoListCommand(int Id) : IRequest;
 public class DeleteTodoListCommandHandler : IRequestHandler<DeleteTodoListCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IUser _user;
 
-    public DeleteTodoListCommandHandler(IApplicationDbContext context)
+    public DeleteTodoListCommandHandler(IApplicationDbContext context, IUser user)
     {
         _context = context;
+        _user = user;
     }
 
     public async Task Handle(DeleteTodoListCommand request, CancellationToken cancellationToken)
     {
         var entity = await _context.TodoLists
-            .Where(l => l.Id == request.Id)
+            .Where(l => l.Id == request.Id && l.OwnerId == _user.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.Id, entity);

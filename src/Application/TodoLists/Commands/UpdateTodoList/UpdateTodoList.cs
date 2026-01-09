@@ -12,16 +12,20 @@ public record UpdateTodoListCommand : IRequest
 public class UpdateTodoListCommandHandler : IRequestHandler<UpdateTodoListCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IUser _user;
 
-    public UpdateTodoListCommandHandler(IApplicationDbContext context)
+    public UpdateTodoListCommandHandler(IApplicationDbContext context, IUser user)
     {
         _context = context;
+        _user = user;
     }
 
     public async Task Handle(UpdateTodoListCommand request, CancellationToken cancellationToken)
     {
         var entity = await _context.TodoLists
-            .FindAsync(new object[] { request.Id }, cancellationToken);
+            .Include(l => l.SharedWith)
+            .Where(l => l.Id == request.Id && (l.OwnerId == _user.Id || l.SharedWith.Any(a => a.UserId == _user.Id)))
+            .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.Id, entity);
 
