@@ -11,10 +11,12 @@ public record CreateTodoListCommand : IRequest<int>
 public class CreateTodoListCommandHandler : IRequestHandler<CreateTodoListCommand, int>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IUser _user;
 
-    public CreateTodoListCommandHandler(IApplicationDbContext context)
+    public CreateTodoListCommandHandler(IApplicationDbContext context, IUser user)
     {
         _context = context;
+        _user = user;
     }
 
     public async Task<int> Handle(CreateTodoListCommand request, CancellationToken cancellationToken)
@@ -22,6 +24,7 @@ public class CreateTodoListCommandHandler : IRequestHandler<CreateTodoListComman
         var entity = new TodoList();
 
         entity.Title = request.Title;
+        entity.OwnerId = _user.Id;
 
         _context.TodoLists.Add(entity);
 
